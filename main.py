@@ -274,13 +274,15 @@ class AdivinadorApp:
         try:
             y = float(self.entry.get().strip())
             x = y - self.b
-            if not x.is_integer():
+            if not x.is_integer:
                 raise ValueError
             x = int(x)
+            if x>=0:
+                raise ValueError
             self.resultados.append((self.estudiante_actual, x))
             self.mostrar_adivinando(x)
         except:
-            messagebox.showerror("Error", "Por favor ingresa un número válido.")
+            messagebox.showerror("Error", "Por favor ingresa un número natural.")
             return
 
     def mostrar_adivinando(self, numero):

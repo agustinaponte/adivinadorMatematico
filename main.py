@@ -4,8 +4,10 @@ import customtkinter as ctk
 import random
 import threading
 import time
+from PIL import Image, ImageTk
 
 ctk.set_default_color_theme("blue")
+verdeUS21="#006756"
 
 class AdivinadorApp:
     def __init__(self):
@@ -13,6 +15,7 @@ class AdivinadorApp:
         self.root.title("Adivinador Mágico Grupal")
         self.root.minsize(900, 600)           # Works from 800x1000
         self.root.state('zoomed')             # Start maximized
+        self.root.configure(fg_color=verdeUS21)
 
         # Variables
         self.a = 0
@@ -30,12 +33,36 @@ class AdivinadorApp:
         self.root.grid_columnconfigure(0, weight=1)
 
         # === TITLE ===
+        title_frame = ctk.CTkFrame(self.root, fg_color=verdeUS21)
+        title_frame.grid(row=0, column=0, pady=(15, 5), sticky="ew")
+        title_frame.grid_columnconfigure(0, weight=1)
+        title_frame.grid_columnconfigure(1, weight=0)
+
+        # Título a la izquierda
         self.title_label = ctk.CTkLabel(
-            self.root,
+            title_frame,
             text="Adivinador Mágico",
             font=ctk.CTkFont(size=36, weight="bold")
         )
-        self.title_label.grid(row=0, column=0, pady=(15, 5), sticky="ew")
+        self.title_label.grid(row=0, column=0, sticky="w", padx=(20, 10))
+
+        # Cargar y mostrar logo a la derecha
+        try:
+            logo_image = Image.open("logoUS21.jpg")
+            logo_image = logo_image.resize((174, 75), Image.Resampling.LANCZOS)
+            self.logo_photo = ImageTk.PhotoImage(logo_image)
+
+            self.logo_label = ctk.CTkLabel(
+                title_frame,
+                image=self.logo_photo,
+                text=""
+            )
+            self.logo_label.grid(row=0, column=1, sticky="e", padx=(0, 20))
+        except Exception as e:
+            print(f"No se pudo cargar el logo: {e}")
+            # Opción fallback: mostrar texto si falla la imagen
+            fallback = ctk.CTkLabel(title_frame, text="LOGO", font=ctk.CTkFont(size=20))
+            fallback.grid(row=0, column=1, sticky="e", padx=(0, 20))
 
         # === MAIN CONTAINER ===
         main_container = ctk.CTkFrame(self.root)
@@ -43,16 +70,14 @@ class AdivinadorApp:
         main_container.grid_rowconfigure(0, weight=1)
         main_container.grid_columnconfigure(0, weight=1)
         main_container.grid_columnconfigure(1, weight=0)  # sidebar
+        main_container.configure(fg_color=verdeUS21)
 
         # === CONTENT FRAME (SCROLLABLE) ===
-        self.content_scroll = ctk.CTkFrame(main_container)
+        self.content_scroll = ctk.CTkFrame(main_container, fg_color="transparent")
         self.content_scroll.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         self.content_scroll.grid_columnconfigure(0, weight=1)
 
         # === SIDEBAR (FIXED WIDTH, SCROLLABLE) ===
-        self.sidebar = ctk.CTkFrame(
-            main_container, width=300, corner_radius=15
-        )
         self.sidebar = ctk.CTkFrame(
             main_container, width=300, corner_radius=15
         )
@@ -84,6 +109,7 @@ class AdivinadorApp:
         self.footer.grid(row=2, column=0, sticky="ew", pady=(10, 15))
         self.footer.grid_columnconfigure(0, weight=1)
         self.footer.grid_columnconfigure(1, weight=1)
+        self.footer.configure(fg_color=verdeUS21)
 
         self.btn_finalizar = ctk.CTkButton(
             self.footer,

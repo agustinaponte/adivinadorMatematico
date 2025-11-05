@@ -5,16 +5,14 @@ import random
 import threading
 import time
 
-# Configuración
 ctk.set_default_color_theme("blue")
 
 class AdivinadorApp:
     def __init__(self):
         self.root = ctk.CTk()
         self.root.title("Adivinador Mágico Grupal")
-        self.root.geometry("1000x700")
-        self.root.resizable(True, True)
-        self.root.state('zoomed')
+        self.root.minsize(900, 600)           # Works from 800x1000
+        self.root.state('zoomed')             # Start maximized
 
         # Variables
         self.a = 0
@@ -27,50 +25,63 @@ class AdivinadorApp:
         self.mostrar_bienvenida()
 
     def setup_ui(self):
-        # Título
+        # === ROOT GRID ===
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
+        # === TITLE ===
         self.title_label = ctk.CTkLabel(
             self.root,
             text="Adivinador Mágico",
-            font=ctk.CTkFont(size=40, weight="bold")
+            font=ctk.CTkFont(size=36, weight="bold")
         )
-        self.title_label.pack(pady=(20, 10))
+        self.title_label.grid(row=0, column=0, pady=(15, 5), sticky="ew")
 
-        # Contenedor principal
+        # === MAIN CONTAINER ===
         main_container = ctk.CTkFrame(self.root)
-        main_container.pack(fill="both", expand=True, padx=40, pady=20)
+        main_container.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
+        main_container.grid_rowconfigure(0, weight=1)
+        main_container.grid_columnconfigure(0, weight=1)
+        main_container.grid_columnconfigure(1, weight=0)  # sidebar
 
-        # === SIDEBAR (inicialmente oculto) ===
-        self.sidebar = ctk.CTkFrame(main_container, width=340, corner_radius=15)
-        self.sidebar.pack_propagate(False)
-        # No se empaqueta aún → se mostrará con .pack() cuando empiece el juego
+        # === CONTENT FRAME (SCROLLABLE) ===
+        self.content_scroll = ctk.CTkFrame(main_container)
+        self.content_scroll.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        self.content_scroll.grid_columnconfigure(0, weight=1)
+
+        # === SIDEBAR (FIXED WIDTH, SCROLLABLE) ===
+        self.sidebar = ctk.CTkFrame(
+            main_container, width=300, corner_radius=15
+        )
+        self.sidebar = ctk.CTkFrame(
+            main_container, width=300, corner_radius=15
+        )
+        self.sidebar.grid_columnconfigure(0, weight=1)
 
         self.sidebar_title = ctk.CTkLabel(
             self.sidebar,
             text="PASOS MÁGICOS",
-            font=ctk.CTkFont(size=22, weight="bold"),
+            font=ctk.CTkFont(size=20, weight="bold"),
             text_color="#FFD700"
         )
+        self.sidebar_title.pack(pady=(20, 10), anchor="w", padx=20)
 
         self.pasos_labels = []
-        for i in range(5):
+        for _ in range(5):
             lbl = ctk.CTkLabel(
                 self.sidebar,
                 text="",
                 font=ctk.CTkFont(size=16),
                 anchor="w",
                 justify="left",
-                wraplength=300
+                wraplength=260  # Fits inside 300px width
             )
-            lbl.pack(pady=10, padx=25, fill="x")
+            lbl.pack(pady=8, padx=20, fill="x")
             self.pasos_labels.append(lbl)
 
-        # === CONTENIDO PRINCIPAL ===
-        self.content_frame = ctk.CTkFrame(main_container)
-        self.content_frame.pack(side="left", fill="both", expand=True, padx=(0, 20), pady=20)
-
-        # Footer
-        self.footer = ctk.CTkFrame(self.root, height=80, corner_radius=0)
-        self.footer.pack(fill="x", side="bottom", pady=(10, 0))
+        # === FOOTER ===
+        self.footer = ctk.CTkFrame(self.root, height=70)
+        self.footer.grid(row=2, column=0, sticky="ew", pady=(10, 15))
         self.footer.grid_columnconfigure(0, weight=1)
         self.footer.grid_columnconfigure(1, weight=1)
 
@@ -78,40 +89,40 @@ class AdivinadorApp:
             self.footer,
             text="Finalizar juego",
             fg_color="#C41E3A",
-            font=ctk.CTkFont(size=18, weight="bold"),
+            font=ctk.CTkFont(size=16, weight="bold"),
             command=self.mostrar_final,
-            height=60
+            height=50
         )
-        self.btn_finalizar.grid(row=0, column=0, padx=30, pady=15, sticky="ew")
+        self.btn_finalizar.grid(row=0, column=0, padx=15, pady=10, sticky="ew")
 
         self.btn_reiniciar = ctk.CTkButton(
             self.footer,
             text="Reiniciar",
             fg_color="#2E8B57",
-            font=ctk.CTkFont(size=18, weight="bold"),
+            font=ctk.CTkFont(size=16, weight="bold"),
             command=self.mostrar_bienvenida,
-            height=60
+            height=50
         )
-        self.btn_reiniciar.grid(row=0, column=1, padx=30, pady=15, sticky="ew")
+        self.btn_reiniciar.grid(row=0, column=1, padx=15, pady=10, sticky="ew")
 
     def limpiar_contenido(self):
-        for widget in self.content_frame.winfo_children():
+        for widget in self.content_scroll.winfo_children():
             widget.destroy()
 
     def mostrar_sidebar(self):
-        self.sidebar.pack(side="right", fill="y", padx=(20, 0), pady=20)
-        self.sidebar_title.pack(pady=(25, 15))
+        self.sidebar.grid(row=0, column=1, sticky="ns", padx=(10, 0))
+        self.actualizar_sidebar()
 
     def ocultar_sidebar(self):
-        self.sidebar.pack_forget()
+        self.sidebar.grid_remove()
 
     def actualizar_sidebar(self):
         pasos = [
-            f"Piensen un número",
+            "Piensen un número",
             f"× {self.a}",
             f"+ {self.a * self.b}",
             f"÷ {self.a}",
-            f"→ Díganme el resultado"
+            "→ Díganme el resultado"
         ]
         for lbl, texto in zip(self.pasos_labels, pasos):
             lbl.configure(text=texto)
@@ -121,47 +132,49 @@ class AdivinadorApp:
         self.b = random.choice(self.S)
         self.estudiante_actual = 1
         self.resultados = []
-        self.actualizar_sidebar()
-        self.mostrar_sidebar()  # ¡Aparece el sidebar!
         self.mostrar_instrucciones()
 
     def mostrar_bienvenida(self):
         self.ocultar_sidebar()
         self.limpiar_contenido()
 
-        inner = ctk.CTkFrame(self.content_frame)
-        inner.pack(fill="both", expand=True, padx=80, pady=80)
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=40, pady=40)
+        frame.grid_columnconfigure(0, weight=1)
 
-        label = ctk.CTkLabel(
-            inner,
+        lbl = ctk.CTkLabel(
+            frame,
             text="¡Bienvenidos al show de magia matemática!\n\n"
                  "Voy a adivinar el número que piensa CADA estudiante...\n"
                  "¡sin que me digan nada!",
-            font=ctk.CTkFont(size=30), justify="center"
+            font=ctk.CTkFont(size=28),
+            justify="center",
+            wraplength=700
         )
-        label.pack(expand=True)
+        lbl.grid(row=0, column=0, pady=30)
 
         btn = ctk.CTkButton(
-            inner,
+            frame,
             text="¡Empezar el Truco!",
-            height=70,
-            font=ctk.CTkFont(size=22, weight="bold"),
-            command=self.iniciar_juego
+            font=ctk.CTkFont(size=20, weight="bold"),
+            command=self.iniciar_juego,
+            height=60
         )
-        btn.pack(pady=50)
+        btn.grid(row=1, column=0, pady=40)
 
     def mostrar_instrucciones(self):
         self.limpiar_contenido()
 
-        scroll = ctk.CTkScrollableFrame(self.content_frame)
-        scroll.pack(fill="both", expand=True, padx=60, pady=50)
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=30, pady=30)
+        frame.grid_columnconfigure(0, weight=1)
 
         title = ctk.CTkLabel(
-            scroll,
-            text="Sigan estos pasos con su número pensado:",
-            font=ctk.CTkFont(size=28, weight="bold")
+            frame,
+            text="Primero piensen un número",
+            font=ctk.CTkFont(size=26, weight="bold")
         )
-        title.pack(pady=20)
+        title.grid(row=0, column=0, pady=(20, 15))
 
         pasos = [
             f"Multipliquen su número por {self.a}",
@@ -170,64 +183,64 @@ class AdivinadorApp:
             "¡Listo! Ahora me dicen el resultado final."
         ]
 
-        for paso in pasos:
+        for i, paso in enumerate(pasos):
             lbl = ctk.CTkLabel(
-                scroll,
+                frame,
                 text=paso,
-                font=ctk.CTkFont(size=26),
+                font=ctk.CTkFont(size=22),
                 anchor="w",
-                justify="left"
+                justify="left",
+                wraplength=700
             )
-            lbl.pack(pady=15, padx=60, fill="x")
+            lbl.grid(row=i+1, column=0, pady=12, sticky="w", padx=40)
 
         btn = ctk.CTkButton(
-            scroll,
+            frame,
             text="¡Entendido! Empezar a adivinar",
+            font=ctk.CTkFont(size=18, weight="bold"),
             command=self.recolectar_resultado,
-            height=70,
-            font=ctk.CTkFont(size=20, weight="bold")
+            height=60
         )
-        btn.pack(pady=60)
+        btn.grid(row=len(pasos)+1, column=0, pady=50)
 
     def recolectar_resultado(self):
         self.limpiar_contenido()
+        self.mostrar_sidebar()
+        
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=50, pady=50)
+        frame.grid_columnconfigure(0, weight=1)
 
-        inner = ctk.CTkFrame(self.content_frame)
-        inner.pack(fill="both", expand=True, padx=70, pady=70)
-
-        label = ctk.CTkLabel(
-            inner,
+        ctk.CTkLabel(
+            frame,
             text=f"Estudiante {self.estudiante_actual}",
-            font=ctk.CTkFont(size=36, weight="bold")
-        )
-        label.pack(pady=50)
+            font=ctk.CTkFont(size=32, weight="bold")
+        ).grid(row=0, column=0, pady=30)
 
-        instr = ctk.CTkLabel(
-            inner,
+        ctk.CTkLabel(
+            frame,
             text="Ingresa tu resultado final:",
-            font=ctk.CTkFont(size=24)
-        )
-        instr.pack(pady=20)
+            font=ctk.CTkFont(size=20)
+        ).grid(row=1, column=0, pady=15)
 
         self.entry = ctk.CTkEntry(
-            inner,
+            frame,
             placeholder_text="Ej: 15.0",
-            width=320,
-            height=60,
-            font=ctk.CTkFont(size=26),
+            font=ctk.CTkFont(size=24),
+            height=55,
             justify="center"
         )
-        self.entry.pack(pady=30)
+        self.entry.grid(row=2, column=0, pady=25, sticky="ew", padx=100)
         self.entry.focus()
 
         btn = ctk.CTkButton(
-            inner,
+            frame,
             text="¡Adivinar mi número!",
+            font=ctk.CTkFont(size=18, weight="bold"),
             command=self.procesar_resultado,
-            height=70,
-            font=ctk.CTkFont(size=20, weight="bold")
+            height=60
         )
-        btn.pack(pady=50)
+        btn.grid(row=3, column=0, pady=40)
 
         self.entry.bind("<Return>", lambda e: self.procesar_resultado())
 
@@ -247,18 +260,18 @@ class AdivinadorApp:
     def mostrar_adivinando(self, numero):
         self.limpiar_contenido()
 
-        inner = ctk.CTkFrame(self.content_frame)
-        inner.pack(fill="both", expand=True, padx=70, pady=70)
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=50, pady=60)
+        frame.grid_columnconfigure(0, weight=1)
 
-        thinking = ctk.CTkLabel(
-            inner,
+        ctk.CTkLabel(
+            frame,
             text="Pensando... calculando ondas mentales...",
-            font=ctk.CTkFont(size=30)
-        )
-        thinking.pack(pady=70)
+            font=ctk.CTkFont(size=26)
+        ).grid(row=0, column=0, pady=50)
 
-        self.progress = ctk.CTkProgressBar(inner, height=40)
-        self.progress.pack(pady=40, fill="x", padx=120)
+        self.progress = ctk.CTkProgressBar(frame, height=35)
+        self.progress.grid(row=1, column=0, sticky="ew", padx=100, pady=30)
         self.progress.set(0)
 
         def animar():
@@ -273,35 +286,34 @@ class AdivinadorApp:
     def revelar_numero(self, numero):
         self.limpiar_contenido()
 
-        inner = ctk.CTkFrame(self.content_frame)
-        inner.pack(fill="both", expand=True, padx=70, pady=70)
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=40, pady=40)
+        frame.grid_columnconfigure(0, weight=1)
 
-        magia = ctk.CTkLabel(
-            inner,
+        ctk.CTkLabel(
+            frame,
             text=f"¡TU NÚMERO ES EL {numero}!",
-            font=ctk.CTkFont(size=70, weight="bold"),
+            font=ctk.CTkFont(size=60, weight="bold"),
             text_color="#FFD700"
-        )
-        magia.pack(pady=100)
+        ).grid(row=0, column=0, pady=60)
 
-        aplausos = ctk.CTkLabel(
-            inner,
+        ctk.CTkLabel(
+            frame,
             text="¡Magia matemática!",
-            font=ctk.CTkFont(size=30)
-        )
-        aplausos.pack(pady=20)
+            font=ctk.CTkFont(size=26)
+        ).grid(row=1, column=0, pady=20)
 
         btn = ctk.CTkButton(
-            inner,
+            frame,
             text="Siguiente estudiante",
+            font=ctk.CTkFont(size=18, weight="bold"),
             command=lambda: [
                 setattr(self, 'estudiante_actual', self.estudiante_actual + 1),
                 self.recolectar_resultado()
             ],
-            height=70,
-            font=ctk.CTkFont(size=20, weight="bold")
+            height=60
         )
-        btn.pack(pady=70)
+        btn.grid(row=2, column=0, pady=50)
 
     def mostrar_final(self):
         self.limpiar_contenido()
@@ -310,35 +322,33 @@ class AdivinadorApp:
             messagebox.showinfo("Sin datos", "No se adivinó ningún número.")
             return
 
-        scroll = ctk.CTkScrollableFrame(self.content_frame)
-        scroll.pack(fill="both", expand=True, padx=60, pady=50)
+        frame = ctk.CTkFrame(self.content_scroll)
+        frame.pack(fill="both", expand=True, padx=30, pady=30)
+        frame.grid_columnconfigure(0, weight=1)
 
-        title = ctk.CTkLabel(
-            scroll,
+        ctk.CTkLabel(
+            frame,
             text="¡Fin del espectáculo!",
-            font=ctk.CTkFont(size=36, weight="bold")
-        )
-        title.pack(pady=40)
+            font=ctk.CTkFont(size=32, weight="bold")
+        ).grid(row=0, column=0, pady=30)
 
-        total = len(self.resultados)
-        resumen = ctk.CTkLabel(
-            scroll,
-            text=f"Se adivinaron {total} número(s):",
-            font=ctk.CTkFont(size=26)
-        )
-        resumen.pack(pady=20)
+        ctk.CTkLabel(
+            frame,
+            text=f"Se adivinaron {len(self.resultados)} número(s):",
+            font=ctk.CTkFont(size=22)
+        ).grid(row=1, column=0, pady=20)
 
-        for est, num in self.resultados:
-            lbl = ctk.CTkLabel(
-                scroll,
+        for i, (est, num) in enumerate(self.resultados):
+            ctk.CTkLabel(
+                frame,
                 text=f"Estudiante {est} → {num}",
-                font=ctk.CTkFont(size=24)
-            )
-            lbl.pack(pady=12, padx=80, fill="x")
+                font=ctk.CTkFont(size=20),
+                anchor="w",
+                wraplength=700
+            ).grid(row=i+2, column=0, pady=8, padx=50, sticky="w")
 
     def run(self):
         self.root.mainloop()
-
 
 if __name__ == "__main__":
     app = AdivinadorApp()

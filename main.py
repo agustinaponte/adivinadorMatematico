@@ -13,8 +13,8 @@ class AdivinadorApp:
     def __init__(self):
         self.root = ctk.CTk()
         self.root.title("Adivinador Mágico Grupal")
-        self.root.minsize(900, 600)           # Works from 800x1000
-        self.root.state('zoomed')             # Start maximized
+        self.root.minsize(900, 600)
+        self.root.state('zoomed')
         self.root.configure(fg_color=verdeUS21)
 
         # Variables

@@ -280,7 +280,7 @@ class AdivinadorApp:
                 raise ValueError
             self.resultados.append((self.estudiante_actual, x))
             self.mostrar_adivinando(x)
-        except:
+        except ValueError:
             messagebox.showerror("Error", "Por favor ingresa un número natural.")
             return
 

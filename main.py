@@ -1,8 +1,6 @@
 from tkinter import messagebox
 import customtkinter as ctk
 import random
-import threading
-import time
 from PIL import Image, ImageTk
 
 ctk.set_default_color_theme("blue")

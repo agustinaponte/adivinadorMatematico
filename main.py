@@ -22,7 +22,8 @@ class AdivinadorApp:
         self.S = [2, 3, 4, 5, 6, 7, 8, 9]
         self.estudiante_actual = 1
         self.resultados = []
-
+        
+        self.animacion_id = None
         self.setup_ui()
         self.mostrar_bienvenida()
 
@@ -131,6 +132,10 @@ class AdivinadorApp:
         self.btn_reiniciar.grid(row=0, column=1, padx=15, pady=10, sticky="ew")
 
     def limpiar_contenido(self):
+        if self.animacion_id is not None:
+            self.root.after_cancel(self.animacion_id)
+            self.animacion_id = None
+
         for widget in self.content_scroll.winfo_children():
             widget.destroy()
 
@@ -196,7 +201,7 @@ class AdivinadorApp:
 
         title = ctk.CTkLabel(
             frame,
-            text="Primero piensen un número",
+            text="Primero piensen un número mayor a 0",
             font=ctk.CTkFont(size=26, weight="bold")
         )
         title.grid(row=0, column=0, pady=(20, 15))
@@ -270,19 +275,55 @@ class AdivinadorApp:
         self.entry.bind("<Return>", lambda e: self.procesar_resultado())
 
     def procesar_resultado(self):
-        try:
-            y = float(self.entry.get().strip())
-            x = y - self.b
-            if not x.is_integer:
-                raise ValueError
-            x = int(x)
-            if x>=0:
-                raise ValueError
-            self.resultados.append((self.estudiante_actual, x))
-            self.mostrar_adivinando(x)
-        except ValueError:
-            messagebox.showerror("Error", "Por favor ingresa un número natural.")
+        texto = self.entry.get().strip()
+
+        if not texto:
+            messagebox.showerror(
+                "Dato faltante",
+                "Tenés que escribir el número que te dio al final del truco."
+            )
             return
+        
+        try:
+            y = float(texto)
+        except ValueError:
+            messagebox.showerror(
+                "Dato inválido",
+                "Eso no parece un número. Probá escribir solo números."
+            )
+            return
+
+        if not y.is_integer():
+            messagebox.showerror(
+                "Número inválido",
+                "El resultado del truco siempre es un número entero."
+            )
+            return
+
+        y = int(y)
+        x = y - self.b
+
+        if x <= 0:
+            messagebox.showerror(
+                "Resultado imposible",
+                "Ese número no puede salir del truco.\n"
+                "Probablemente empezaste con un número menor o igual a 0."
+            )
+            return
+
+        verificacion = (x * self.a + self.a * self.b) / self.a
+        if verificacion != y:
+            messagebox.showerror(
+                "Error de cálculo",
+                "Ese resultado no coincide con los pasos del truco.\n"
+                "Revisá las cuentas y probá de nuevo."
+            )
+            return
+
+        # ✅ Todo OK
+        self.resultados.append((self.estudiante_actual, x))
+        self.mostrar_adivinando(x)
+
 
     def mostrar_adivinando(self, numero):
         self.limpiar_contenido()
@@ -301,14 +342,22 @@ class AdivinadorApp:
         self.progress.grid(row=1, column=0, sticky="ew", padx=100, pady=30)
         self.progress.set(0)
 
-        def animar():
-            for i in range(1, 101):
-                time.sleep(0.02)
-                self.progress.set(i / 100)
-                self.root.update_idletasks()
-            self.revelar_numero(numero)
+        self._animar_progreso(0, numero)
 
-        threading.Thread(target=animar, daemon=True).start()
+    def _animar_progreso(self, valor, numero):
+        if not self.progress.winfo_exists():
+            return  # el widget ya no existe
+
+        if valor >= 100:
+            self.animacion_id = None
+            self.revelar_numero(numero)
+            return
+
+        self.progress.set(valor / 100)
+        self.animacion_id = self.root.after(
+            20, lambda: self._animar_progreso(valor + 1, numero)
+        )
+
 
     def revelar_numero(self, numero):
         self.limpiar_contenido()

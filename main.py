@@ -70,12 +70,12 @@ class AdivinadorApp:
         main_container.grid_columnconfigure(1, weight=0)  # sidebar
         main_container.configure(fg_color=verdeUS21)
 
-        # === CONTENT FRAME (SCROLLABLE) ===
+        # === CONTENT FRAME ===
         self.content_scroll = ctk.CTkFrame(main_container, fg_color="transparent")
         self.content_scroll.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         self.content_scroll.grid_columnconfigure(0, weight=1)
 
-        # === SIDEBAR (FIXED WIDTH, SCROLLABLE) ===
+        # === SIDEBAR ===
         self.sidebar = ctk.CTkFrame(
             main_container, width=300, corner_radius=15
         )
@@ -97,7 +97,7 @@ class AdivinadorApp:
                 font=ctk.CTkFont(size=16),
                 anchor="w",
                 justify="left",
-                wraplength=260  # Fits inside 300px width
+                wraplength=260
             )
             lbl.pack(pady=8, padx=20, fill="x")
             self.pasos_labels.append(lbl)
